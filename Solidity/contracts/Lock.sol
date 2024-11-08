@@ -97,15 +97,6 @@ contract InsuranceClaimsWithUserAndAdmin {
         emit addedInsurer(_insurerAddress, _insurerName);
     }
 
-    function removeInsurer(address _insurerAddress) external onlyAdmin {
-        require(insurers[_insurerAddress].isInsurer, "Insurer does not exist.");
-
-        insurers[_insurerAddress].isInsurer = false;
-
-        emit addedInsurer(_insurerAddress, insurers[_insurerAddress].insurerName);  
-    }
-
-
 	function addPolicy(string calldata _policyName, uint256 _policyAmount, uint256 _premiumAmount) onlyAdmin external{
         policyCounter++;
 
@@ -142,17 +133,6 @@ contract InsuranceClaimsWithUserAndAdmin {
 
         emit UserRegistered(_userAddress, _name);
     }
-
-    function removeUser(address _userAddress) external onlyInsurer {
-        require(users[_userAddress].isRegistered, "User is not registered.");
-        
-        require(users[_userAddress].policyArray.length == 0, "User still has assigned policies.");
-
-        users[_userAddress].isRegistered = false;
-        
-        emit UserRegistered(_userAddress, users[_userAddress].name);  
-    }
-
 
     function assignPolicyToUser(address _userAddress, uint256 _policyId) onlyInsurer external{
         require(users[_userAddress].isRegistered, "User is not registered.");
