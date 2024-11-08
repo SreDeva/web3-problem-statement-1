@@ -45,8 +45,6 @@ contract InsuranceClaimsWithUserAndAdmin {
         string documentHash;
         uint256 amount;
         ClaimStatus status;
-        uint256 dateOfIncident;
-        uint256 dateOfClaim;
     }
 
     struct ClaimAudit {
@@ -181,8 +179,7 @@ contract InsuranceClaimsWithUserAndAdmin {
         usersPolicyDocs[_userAddress].push(__userPolicyDocHash);
     }
 
-
-    function submitClaim(uint256 _policyId, string calldata _documentHash, uint256 _amount, uint256 _dateOfIncident) external {
+    function submitClaim(uint256 _policyId, string calldata _documentHash, uint256 _amount) external {
         require(users[msg.sender].isRegistered, "User must be registered to submit claims.");
         require(_amount > 0, "Claim amount must be greater than zero.");
 
@@ -194,9 +191,7 @@ contract InsuranceClaimsWithUserAndAdmin {
             policyholder: msg.sender,
             documentHash: _documentHash,
             amount: _amount,
-            status: ClaimStatus.Pending,
-            dateOfIncident: _dateOfIncident,
-            dateOfClaim: block.timestamp
+            status: ClaimStatus.Pending
         });
 
         claims[claimCounter] = newClaim;
@@ -252,6 +247,15 @@ contract InsuranceClaimsWithUserAndAdmin {
     function getUserClaims(address _policyholder) external view returns (uint256[] memory) {
         return userClaims[_policyholder];
     }
+
+    function getAllClaims() external view returns (Claim[] memory) {
+        Claim[] memory allClaims = new Claim[](claimCounter);
+        for (uint256 i = 1; i <= claimCounter; i++) {
+            allClaims[i - 1] = claims[i];
+        }
+        return allClaims;
+    }
+
 
     function getPolicysUnderUser(address _userAddress) external view returns (Policy[] memory) {
 

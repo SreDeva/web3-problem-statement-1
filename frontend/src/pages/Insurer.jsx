@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { ContractAbi, contractAddress } from '../App'; // Ensure contract ABI and address are correctly imported
+import { ContractAbi, contractAddress } from '../App';
 import axios from "axios";
 import '../css/Insurer.css';
 
@@ -25,14 +25,46 @@ const Insurer = () => {
     const fetchClaims = async () => {
       if (!contract) return;
       try {
-        const claimsData = await contract.getUserClaims(userAddress);
-        setClaims(claimsData);
+        const claimsData = await contract.getAllClaims();
+  
+        console.log(claimsData); // Log the claims data to inspect
+  
+        // Fetch details for each claim and handle BigNumber values properly
+        const claimsDetails = await Promise.all(
+          claimsData.map(async (claim) => {
+            // Ensure claimId is a BigNumber and convert it to string
+            const claimIdString = ethers.BigNumber.isBigNumber(claim.claimId) ? claim.claimId.toString() : claimId;
+  
+            const claimDet = await contract.claims(claim.claimId.toString()); // Fetch claim details from contract
+            setClaimId(claim.claimId.toString());
+            
+            console.log(claimDet); // Log the claim details to inspect
+  
+            // Ensure BigNumber fields are converted to strings
+            const policyId = claimDet.policyId ? ethers.BigNumber.isBigNumber(claimDet.policyId) ? claimDet.policyId.toString() : claimDet.policyId : claimDet.policyId;
+            const amount = claimDet.amount ? ethers.utils.formatEther(claimDet.amount) : claimDet.amount.toString();
+            const status = claimDet.status ? ethers.BigNumber.isBigNumber(claimDet.status) ? claimDet.status.toString() : claimDet.status : claimDet.status;
+            const documentHash = claimDet.documentHash || '';
+  
+            return {
+              claimId: claimIdString,        // Convert claimId BigNumber to string
+              policyId: policyId,            // Convert policyId BigNumber to string
+              amount: amount,                // Convert amount (BigNumber to Ether formatted string)
+              status: status,                // Convert status (BigNumber to string)
+              documentHash: documentHash,    // Ensure document hash is a string
+            };
+          })
+        );
+  
+        setClaims(claimsDetails); // Set detailed claim data
       } catch (error) {
         console.error("Error fetching claims:", error);
       }
     };
     fetchClaims();
-  }, [userAddress]);
+  }, []);
+  
+  
 
   const handleTransaction = async (transaction) => {
     if (!contract) return;
@@ -47,8 +79,27 @@ const Insurer = () => {
   };
 
   const registerUser = () => handleTransaction(contract.registerUser(userAddress, userName, userEmail));
-  const approveClaim = (claimId) => handleTransaction(contract.approveClaim(claimId));
-  const rejectClaim = (claimId, reason) => handleTransaction(contract.rejectClaim(claimId, reason));
+  const approveClaim = (claimId) => {
+    console.log(claimId)
+    if (!ethers.BigNumber.isBigNumber(claimId)) {
+      // If claimId is not a BigNumber, try to convert it to BigNumber
+      claimId = ethers.BigNumber.from(claimId);
+    }
+  
+    // Now that we are sure claimId is a valid BigNumber, pass it to the contract
+    handleTransaction(contract.approveClaim(claimId));
+  };
+  
+  const rejectClaim = (claimId, reason) => {
+    if (!ethers.BigNumber.isBigNumber(claimId)) {
+      // If claimId is not a BigNumber, try to convert it to BigNumber
+      claimId = ethers.BigNumber.from(claimId);
+    }
+  
+    // Now that we are sure claimId is a valid BigNumber, pass it to the contract
+    handleTransaction(contract.rejectClaim(claimId, reason));
+  };
+  
 
   const assignPolicy = async () => {
     if (!contract) return;
@@ -58,7 +109,6 @@ const Insurer = () => {
 
       const policyFileUrl = policyDetails.policyDocHash;
       const response = await axios.get(policyFileUrl);
-      console.log(response)
       const policyData = response.data;
 
       const combinedData = {
@@ -68,14 +118,13 @@ const Insurer = () => {
           email: userDetails.email,
         },
         policy: {
-          id: policyDetails.policyId,
+          id: policyDetails.policyId.toString(),
           name: policyDetails.policyName,
           amount: ethers.utils.formatEther(policyDetails.policyAmount),
           premium: ethers.utils.formatEther(policyDetails.premiumAmount),
           ...policyData,
         },
       };
-      console.log(combinedData)
 
       const fileData = new FormData();
       const blob = new Blob([JSON.stringify(combinedData)], { type: "text/plain" });
@@ -173,8 +222,8 @@ const Insurer = () => {
           <h2>Claim Details</h2>
           <p><strong>Claim ID:</strong> {selectedClaim.claimId}</p>
           <p><strong>Policy ID:</strong> {selectedClaim.policyId}</p>
-          <p><strong>Claim Amount:</strong> {ethers.utils.formatEther(selectedClaim.amount)} ETH</p>
-          <p><strong>Date of Incident:</strong> {selectedClaim.dateOfIncident}</p>
+          <p><strong>Claim Amount:</strong> {selectedClaim.amount} ETH</p>
+          <p><strong>Status:</strong> {selectedClaim.status}</p>
           <p><strong>Document Hash:</strong> {selectedClaim.documentHash}</p>
           <div>
             <h3>Reason for Rejection (if any)</h3>

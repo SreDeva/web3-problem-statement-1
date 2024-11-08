@@ -1,10 +1,20 @@
 import fitz  # PyMuPDF
 import google.generativeai as genai
+from fastapi.middleware.cors import CORSMiddleware
 import os
 from fastapi import FastAPI, UploadFile, File
 import uvicorn
 
 app = FastAPI()
+# Allow CORS for localhost:3000 (React frontend)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Adjust if your frontend runs on a different origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 def extract_pdf_text(pdf_path):
     # Open the PDF file

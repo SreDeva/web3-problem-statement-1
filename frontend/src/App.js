@@ -349,16 +349,51 @@ export const ContractAbi =  [
         "internalType": "enum InsuranceClaimsWithUserAndAdmin.ClaimStatus",
         "name": "status",
         "type": "uint8"
-      },
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllClaims",
+    "outputs": [
       {
-        "internalType": "uint256",
-        "name": "dateOfIncident",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "dateOfClaim",
-        "type": "uint256"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "claimId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "policyId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "policyholder",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "documentHash",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "amount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum InsuranceClaimsWithUserAndAdmin.ClaimStatus",
+            "name": "status",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct InsuranceClaimsWithUserAndAdmin.Claim[]",
+        "name": "",
+        "type": "tuple[]"
       }
     ],
     "stateMutability": "view",
@@ -771,11 +806,6 @@ export const ContractAbi =  [
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_dateOfIncident",
-        "type": "uint256"
       }
     ],
     "name": "submitClaim",
@@ -877,7 +907,7 @@ export const ContractAbi =  [
   }
 ]
 
-export const contractAddress = '0x887e70005aEE714530a44C16DEC257ea590cD89f';
+export const contractAddress = '0x1bA865B10B91a8783425Fa0Cb33D2168e95E6440';
 export const provider = "https://polygonzkevm-cardona.g.alchemy.com/v2/q3LpIAKv2V2gdd775yda3khmgS3_el5y";
 
 function App() {
