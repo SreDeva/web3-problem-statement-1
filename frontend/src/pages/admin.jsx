@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
-import { ContractAbi, contractAddress } from './App'; // Ensure contract ABI and address are correctly imported
+import axios from 'axios';
+import { ContractAbi, contractAddress } from '../App';
+import { PinataSDK } from "pinata-web3";
+const PINATA_SECRET_KEY = '710f8fd2ebd66932dc34f88797646fbce7b391a8e6071048c23702f8d654773e';
+const PINATA_API_KEY = '338fa16398e5ee8f8dad'; // Ensure contract ABI and address are correctly imported
+
 
 const Admin = () => {
   const [insurerAddress, setInsurerAddress] = useState("");
@@ -9,25 +14,14 @@ const Admin = () => {
   const [policyName, setPolicyName] = useState("");
   const [policyAmount, setPolicyAmount] = useState("");
   const [premiumAmount, setPremiumAmount] = useState("");
+  const [policyDocument, setPolicyDocument] = useState(null); // New state for the policy document
   const [policyIdToRemove, setPolicyIdToRemove] = useState("");
+  const [ policyDetails, setPolicyDetails] = useState();
   const [account, setAccount] = useState(null);
-  const [provider, setProvider] = useState(null);
-  const [contract, setContract] = useState(null);
 
-  // Connect to Ethereum provider (MetaMask)
-  const connectToProvider = async () => {
-    try {
-      const prov = new ethers.providers.Web3Provider(window.ethereum);
-      setProvider(prov);
-      const signer = prov.getSigner();
-      const contractInstance = new ethers.Contract(contractAddress, ContractAbi, signer);
-      setContract(contractInstance);
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      setAccount(accounts[0]);
-    } catch (error) {
-      console.error("Error connecting to MetaMask:", error);
-    }
-  };
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
+  const contract = new ethers.Contract(contractAddress, ContractAbi, signer);
 
   // Add an insurer
   const addInsurer = async () => {
@@ -59,10 +53,33 @@ const Admin = () => {
   const addPolicy = async () => {
     if (!contract) return;
     try {
+      const fileData = new FormData();
+  
+      // Correctly creating a new File object
+      const file = new File([policyDetails], "policyDocument.txt", { type: "text/plain" });
+      fileData.append('file', file);
+  
+      const responseData = await axios({
+        method: 'post',
+        url: 'https://api.pinata.cloud/pinning/pinFileToIPFS',
+        data: fileData,
+        headers: {
+          pinata_api_key: PINATA_API_KEY,
+          pinata_secret_api_key: PINATA_SECRET_KEY,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+  
+      const fileUrl = 'https://gateway.pinata.cloud/ipfs/' + responseData.data.IpfsHash;
+      console.log(fileUrl);
+      setPolicyDocument(fileUrl);
+  
+      // Proceed with the transaction
       const tx = await contract.addPolicy(
         policyName,
         ethers.utils.parseEther(policyAmount.toString()),
-        ethers.utils.parseEther(premiumAmount.toString())
+        ethers.utils.parseEther(premiumAmount.toString()),
+        fileUrl  // Use the actual URL received after uploading
       );
       await tx.wait();
       alert("Policy added successfully!");
@@ -71,6 +88,7 @@ const Admin = () => {
       alert("Error adding policy.");
     }
   };
+  
 
   // Remove a policy
   const removePolicy = async () => {
@@ -88,7 +106,6 @@ const Admin = () => {
   return (
     <div>
       <h1>Admin Dashboard</h1>
-      <button onClick={connectToProvider}>Connect Wallet</button>
 
       <div>
         <h2>Add Insurer</h2>
@@ -143,6 +160,12 @@ const Admin = () => {
           placeholder="Premium Amount"
           value={premiumAmount}
           onChange={(e) => setPremiumAmount(e.target.value)}
+        />
+        <input
+           type="text"
+           placeholder="Policy Details"
+           value={policyDetails}
+           onChange={(e) => setPolicyDetails(e.target.value)}
         />
         <button onClick={addPolicy}>Add Policy</button>
       </div>

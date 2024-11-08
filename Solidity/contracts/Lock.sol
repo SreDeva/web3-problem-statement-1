@@ -34,6 +34,7 @@ contract InsuranceClaimsWithUserAndAdmin {
 		string policyName;
 		uint256 policyAmount;
 		uint256 premiumAmount;
+        string policyDocHash;
 		bool validPolicy;
 	}
     
@@ -61,6 +62,7 @@ contract InsuranceClaimsWithUserAndAdmin {
     mapping(uint256 => Claim) public claims;
     mapping(address => uint256[]) public userClaims;
     mapping(uint256 => ClaimAudit[]) public claimAudits;
+    mapping(address => string[]) public usersPolicyDocs;
 
     uint256 public claimCounter;
     uint256 public policyCounter;
@@ -83,6 +85,22 @@ contract InsuranceClaimsWithUserAndAdmin {
         _;
     }
 
+    function isWhatAccount() external view returns(string memory){
+
+        if(admin == msg.sender){
+        return "Admin";
+        }
+        else if(insurers[msg.sender].isInsurer){
+            return "Insurer";
+        }
+        else if(users[msg.sender].isRegistered){
+            return "User";
+        }
+        else{
+            return "Not registered";
+        }
+    }
+
 
     function addInsurer(address _insurerAddress, string calldata _insurerName, string calldata _email) onlyAdmin external{
         require(!insurers[_insurerAddress].isInsurer , "Insurer already exists");
@@ -97,7 +115,16 @@ contract InsuranceClaimsWithUserAndAdmin {
         emit addedInsurer(_insurerAddress, _insurerName);
     }
 
-	function addPolicy(string calldata _policyName, uint256 _policyAmount, uint256 _premiumAmount) onlyAdmin external{
+    function removeInsurer(address _insurerAddress) external onlyAdmin {
+        require(insurers[_insurerAddress].isInsurer, "Insurer does not exist.");
+
+        insurers[_insurerAddress].isInsurer = false;
+
+        emit addedInsurer(_insurerAddress, insurers[_insurerAddress].insurerName);  
+    }
+
+
+	function addPolicy(string calldata _policyName, uint256 _policyAmount, uint256 _premiumAmount, string calldata _policyDocHash) onlyAdmin external{
         policyCounter++;
 
 		policy[policyCounter] = Policy({
@@ -105,6 +132,7 @@ contract InsuranceClaimsWithUserAndAdmin {
 			policyName: _policyName,
 			policyAmount: _policyAmount,
 			premiumAmount: _premiumAmount,
+            policyDocHash: _policyDocHash,
 			validPolicy: true
 		});
 
@@ -134,11 +162,23 @@ contract InsuranceClaimsWithUserAndAdmin {
         emit UserRegistered(_userAddress, _name);
     }
 
-    function assignPolicyToUser(address _userAddress, uint256 _policyId) onlyInsurer external{
+    function removeUser(address _userAddress) external onlyInsurer {
+        require(users[_userAddress].isRegistered, "User is not registered.");
+        
+        require(users[_userAddress].policyArray.length == 0, "User still has assigned policies.");
+
+        users[_userAddress].isRegistered = false;
+        
+        emit UserRegistered(_userAddress, users[_userAddress].name);  
+    }
+
+
+    function assignPolicyToUser(address _userAddress, uint256 _policyId, string calldata __userPolicyDocHash) onlyInsurer external{
         require(users[_userAddress].isRegistered, "User is not registered.");
         require(policy[_policyId].validPolicy, "Policy is not valid");
 
         users[_userAddress].policyArray.push(_policyId);
+        usersPolicyDocs[_userAddress].push(__userPolicyDocHash);
     }
 
 
@@ -234,6 +274,11 @@ contract InsuranceClaimsWithUserAndAdmin {
                 allPolicies[i - 1] = policy[i];
         }
         return allPolicies;
+    }
+
+    function getPolicyByID(uint256 _policyId) external view returns(Policy memory){
+        require(_policyId <= policyCounter, "Policy does not exist.");
+        return policy[_policyId];
     }
 
 }
