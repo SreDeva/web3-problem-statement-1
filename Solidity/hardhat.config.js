@@ -7,12 +7,12 @@ module.exports = {
   solidity: "0.8.24",
   networks: {
     sepolia: {
-      url: `https://sepolia.infura.io/v3/34595ba8d5054540908cf0ed72b6d25b`,
-      accounts: ["2b3ad6396415696369a9b2a77981e9d85645f7b0504361a5cb22a2178e3543a1"],
+      url: `https://sepolia.infura.io/v3/`,
+      accounts: [""],
     },
     zkEVM: {
       url: `https://rpc.cardona.zkevm-rpc.com`,
-      accounts: ["2b3ad6396415696369a9b2a77981e9d85645f7b0504361a5cb22a2178e3543a1"],
+      accounts: [""],
       },
     localhost: {
       url: 'http://localhost:8545',
@@ -21,7 +21,7 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      sepolia: "DZKDEU2FRXMY5NS4WWFQGCD8UQINYZAV2Z",
+      sepolia: "",
     },
   },
 };
