@@ -4,8 +4,8 @@ import axios from "axios";
 import { ContractAbi, contractAddress } from "../App";
 import "../css/Admin.css";
 
-const PINATA_SECRET_KEY = "your_pinata_secret_key";
-const PINATA_API_KEY = "your_pinata_api_key";
+const PINATA_SECRET_KEY = '710f8fd2ebd66932dc34f88797646fbce7b391a8e6071048c23702f8d654773e';
+const PINATA_API_KEY = '338fa16398e5ee8f8dad';
 
 const Admin = () => {
   const [insurerAddress, setInsurerAddress] = useState("");

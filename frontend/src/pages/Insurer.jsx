@@ -4,9 +4,8 @@ import { ContractAbi, contractAddress } from "../App";
 import axios from "axios";
 import "../css/Insurer.css";
 
-const PINATA_SECRET_KEY = 'your_pinata_secret_key';
-const PINATA_API_KEY = 'your_pinata_api_key';
-
+const PINATA_SECRET_KEY = '710f8fd2ebd66932dc34f88797646fbce7b391a8e6071048c23702f8d654773e';
+const PINATA_API_KEY = '338fa16398e5ee8f8dad';
 const Insurer = () => {
   const [userAddress, setUserAddress] = useState("");
   const [userName, setUserName] = useState("");
@@ -52,6 +51,7 @@ const Insurer = () => {
   const handleTransaction = async (transaction) => {
     if (!contract) return;
     try {
+      console.log(contract)
       const tx = await transaction;
       await tx.wait();
       alert("Transaction successful!");
