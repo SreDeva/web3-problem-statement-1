@@ -155,6 +155,7 @@ const User = () => {
     });
 
     const validityResponse = JSON.parse(validation.data.validity_response);
+    console.log(validityResponse)
     if (!validityResponse.valid) {
       alert("Fraudulent claim");
       return;
@@ -206,7 +207,6 @@ const User = () => {
       
       // Convert each claim ID (BigNumber) to a string
       const claimIds = claims.map(claim => claim.toString());
-      console.log(claimIds);
 
       setUserClaims(claimIds); // Now setting the claims as strings
     } catch (error) {
@@ -232,6 +232,8 @@ const User = () => {
         status: claim.status.toString() === "0" ? "Pending" : claim.status.toString() === "1" ? "Approved" : "Rejected", // Convert status to human-readable format
       };
 
+      console.log(formattedClaimDetails)
+
       setClaimDetails(formattedClaimDetails);
     } catch (error) {
       console.error("Error fetching claim details:", error);
@@ -241,27 +243,42 @@ const User = () => {
 
   // Function to get the policies assigned to the user
   const getPoliciesUnderUser = async () => {
-    if (!contract) return;
+    if (!contract || !userAddress) return; // Ensure contract and userAddress are available
     try {
       const policies = await contract.getPolicysUnderUser(userAddress);
       
       // Format policy amounts from BigNumber to Ether
       const formattedPolicies = policies.map((policy) => ({
-        ...policy,
-        policyAmount: ethers.utils.formatEther(policy.policyAmount), // Convert policy amount to Ether format
+        policyNo: policy.policyNo ? ethers.utils.formatEther(policy.policyNo) : null,
+        policyId: policy.policyId ? ethers.utils.formatUnits(policy.policyId, 0) : null, // Assuming policyId should be an integer
+        policyName: policy.policyName || "N/A",
+        policyAmount: policy.policyAmount ? ethers.utils.formatEther(policy.policyAmount) : "0", 
+        premiumAmount: policy.premiumAmount ? ethers.utils.formatEther(policy.premiumAmount) : "0",
+        policyDocHash: policy.policyDocHash || "",
+        validPolicy: policy.validPolicy || false,
       }));
-
+      
       setPolicies(formattedPolicies);
     } catch (error) {
       console.error("Error fetching user policies:", error);
       alert("Error fetching user policies.");
     }
   };
+  
 
   // Fetch user address on component mount
   useEffect(() => {
-    fetchUserAddress(); // Automatically fetch user's address
-  }, []);
+    const fetchData = async () => {
+      await fetchUserAddress();
+  
+      if (userAddress) {
+        await getUserClaims();
+        await getPoliciesUnderUser();
+      }
+    };
+  
+    fetchData();
+  }, [userAddress]);
 
   return (
     <div>
@@ -295,8 +312,14 @@ const User = () => {
           userClaims.map((claimId) => (
             <div key={claimId}>
               <h3>Claim ID: {claimId}</h3>
-              <button onClick={() => getClaimDetails(claimId)}>
-                View Claim Details
+              <button onClick={() => getClaimDetails(claimId)}> See Details
+              {claimDetails && claimDetails.claimId === claimId && (
+                <div>
+                  <p>Status: {claimDetails.status}</p>
+                  <p>Amount: {claimDetails.amount} ETH</p>
+                  {/* Additional claim details here */}
+                </div>
+              )}
               </button>
             </div>
           ))

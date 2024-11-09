@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
-import axios from 'axios';
-import { ContractAbi, contractAddress } from '../App';
-import { PinataSDK } from "pinata-web3";
-const PINATA_SECRET_KEY = '710f8fd2ebd66932dc34f88797646fbce7b391a8e6071048c23702f8d654773e';
-const PINATA_API_KEY = '338fa16398e5ee8f8dad'; // Ensure contract ABI and address are correctly imported
+import axios from "axios";
+import { ContractAbi, contractAddress } from "../App";
+import "../css/Admin.css";
 
+const PINATA_SECRET_KEY = "your_pinata_secret_key";
+const PINATA_API_KEY = "your_pinata_api_key";
 
 const Admin = () => {
   const [insurerAddress, setInsurerAddress] = useState("");
@@ -14,10 +14,8 @@ const Admin = () => {
   const [policyName, setPolicyName] = useState("");
   const [policyAmount, setPolicyAmount] = useState("");
   const [premiumAmount, setPremiumAmount] = useState("");
-  const [policyDocument, setPolicyDocument] = useState(null); // New state for the policy document
+  const [policyDetails, setPolicyDetails] = useState("");
   const [policyIdToRemove, setPolicyIdToRemove] = useState("");
-  const [ policyDetails, setPolicyDetails] = useState();
-  const [account, setAccount] = useState(null);
 
   const provider = new ethers.providers.Web3Provider(window.ethereum);
   const signer = provider.getSigner();
@@ -54,32 +52,27 @@ const Admin = () => {
     if (!contract) return;
     try {
       const fileData = new FormData();
-  
-      // Correctly creating a new File object
       const file = new File([policyDetails], "policyDocument.txt", { type: "text/plain" });
-      fileData.append('file', file);
-  
+      fileData.append("file", file);
+
       const responseData = await axios({
-        method: 'post',
-        url: 'https://api.pinata.cloud/pinning/pinFileToIPFS',
+        method: "post",
+        url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
         data: fileData,
         headers: {
           pinata_api_key: PINATA_API_KEY,
           pinata_secret_api_key: PINATA_SECRET_KEY,
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
-  
-      const fileUrl = 'https://gateway.pinata.cloud/ipfs/' + responseData.data.IpfsHash;
-      console.log(fileUrl);
-      setPolicyDocument(fileUrl);
-  
-      // Proceed with the transaction
+
+      const fileUrl = "https://gateway.pinata.cloud/ipfs/" + responseData.data.IpfsHash;
+
       const tx = await contract.addPolicy(
         policyName,
         ethers.utils.parseEther(policyAmount.toString()),
         ethers.utils.parseEther(premiumAmount.toString()),
-        fileUrl  // Use the actual URL received after uploading
+        fileUrl
       );
       await tx.wait();
       alert("Policy added successfully!");
@@ -88,7 +81,6 @@ const Admin = () => {
       alert("Error adding policy.");
     }
   };
-  
 
   // Remove a policy
   const removePolicy = async () => {
@@ -104,10 +96,11 @@ const Admin = () => {
   };
 
   return (
-    <div>
+    <div className="admin-container">
       <h1>Admin Dashboard</h1>
 
-      <div>
+      {/* Add Insurer Section */}
+      <div className="admin-section">
         <h2>Add Insurer</h2>
         <input
           type="text"
@@ -130,7 +123,8 @@ const Admin = () => {
         <button onClick={addInsurer}>Add Insurer</button>
       </div>
 
-      <div>
+      {/* Remove Insurer Section */}
+      <div className="admin-section">
         <h2>Remove Insurer</h2>
         <input
           type="text"
@@ -141,7 +135,8 @@ const Admin = () => {
         <button onClick={removeInsurer}>Remove Insurer</button>
       </div>
 
-      <div>
+      {/* Add Policy Section */}
+      <div className="admin-section">
         <h2>Add Policy</h2>
         <input
           type="text"
@@ -151,26 +146,26 @@ const Admin = () => {
         />
         <input
           type="number"
-          placeholder="Policy Amount"
+          placeholder="Policy Amount (in ETH)"
           value={policyAmount}
           onChange={(e) => setPolicyAmount(e.target.value)}
         />
         <input
           type="number"
-          placeholder="Premium Amount"
+          placeholder="Premium Amount (in ETH)"
           value={premiumAmount}
           onChange={(e) => setPremiumAmount(e.target.value)}
         />
-        <input
-           type="text"
-           placeholder="Policy Details"
-           value={policyDetails}
-           onChange={(e) => setPolicyDetails(e.target.value)}
+        <textarea
+          placeholder="Policy Details"
+          value={policyDetails}
+          onChange={(e) => setPolicyDetails(e.target.value)}
         />
         <button onClick={addPolicy}>Add Policy</button>
       </div>
 
-      <div>
+      {/* Remove Policy Section */}
+      <div className="admin-section">
         <h2>Remove Policy</h2>
         <input
           type="number"

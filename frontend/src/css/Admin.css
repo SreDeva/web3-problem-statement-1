@@ -1,0 +1,107 @@
+/* Overall background styling */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    background: #121212;
+    color: #f0f0f0;
+    overflow-x: hidden;
+}
+
+/* Admin container styling */
+.admin-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+h1 {
+    text-align: center;
+    font-size: 2.5em;
+    color: #ffcd3c;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 1.8em;
+    color: #ff9f68;
+    margin-top: 20px;
+}
+
+/* Input and text area styling */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid #3e3e5e;
+    color: #f0f0f0;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: all 0.3s ease;
+}
+
+input:focus,
+textarea:focus {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: #ff9f68;
+    outline: none;
+}
+
+/* Button styling */
+button {
+    background: linear-gradient(135deg, #ff9f68, #ffcd3c);
+    color: #333;
+    padding: 10px 20px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background 0.3s ease, transform 0.2s ease;
+    width: 100%;
+}
+
+button:hover {
+    background: linear-gradient(135deg, #ffcd3c, #ff9f68);
+    transform: scale(1.05);
+}
+
+/* Admin section styling */
+.admin-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 2em;
+    }
+
+    h2 {
+        font-size: 1.4em;
+    }
+
+    button {
+        padding: 12px;
+        font-size: 0.9em;
+    }
+}

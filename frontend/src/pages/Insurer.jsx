@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { ContractAbi, contractAddress } from '../App';
+import { ContractAbi, contractAddress } from "../App";
 import axios from "axios";
-import '../css/Insurer.css';
+import "../css/Insurer.css";
 
-const PINATA_SECRET_KEY = '710f8fd2ebd66932dc34f88797646fbce7b391a8e6071048c23702f8d654773e';
-const PINATA_API_KEY = '338fa16398e5ee8f8dad';
+const PINATA_SECRET_KEY = 'your_pinata_secret_key';
+const PINATA_API_KEY = 'your_pinata_api_key';
 
 const Insurer = () => {
   const [userAddress, setUserAddress] = useState("");
@@ -26,45 +26,28 @@ const Insurer = () => {
       if (!contract) return;
       try {
         const claimsData = await contract.getAllClaims();
-  
-        console.log(claimsData); // Log the claims data to inspect
-  
-        // Fetch details for each claim and handle BigNumber values properly
         const claimsDetails = await Promise.all(
           claimsData.map(async (claim) => {
-            // Ensure claimId is a BigNumber and convert it to string
-            const claimIdString = ethers.BigNumber.isBigNumber(claim.claimId) ? claim.claimId.toString() : claimId;
-  
-            const claimDet = await contract.claims(claim.claimId.toString()); // Fetch claim details from contract
-            setClaimId(claim.claimId.toString());
-            
-            console.log(claimDet); // Log the claim details to inspect
-  
-            // Ensure BigNumber fields are converted to strings
-            const policyId = claimDet.policyId ? ethers.BigNumber.isBigNumber(claimDet.policyId) ? claimDet.policyId.toString() : claimDet.policyId : claimDet.policyId;
-            const amount = claimDet.amount ? ethers.utils.formatEther(claimDet.amount) : claimDet.amount.toString();
-            const status = claimDet.status ? ethers.BigNumber.isBigNumber(claimDet.status) ? claimDet.status.toString() : claimDet.status : claimDet.status;
-            const documentHash = claimDet.documentHash || '';
-  
+            const claimIdString = ethers.BigNumber.isBigNumber(claim.claimId)
+              ? claim.claimId.toString()
+              : claimId;
+            const claimDet = await contract.claims(claim.claimId.toString());
             return {
-              claimId: claimIdString,        // Convert claimId BigNumber to string
-              policyId: policyId,            // Convert policyId BigNumber to string
-              amount: amount,                // Convert amount (BigNumber to Ether formatted string)
-              status: status,                // Convert status (BigNumber to string)
-              documentHash: documentHash,    // Ensure document hash is a string
+              claimId: claimIdString,
+              policyId: claimDet.policyId ? claimDet.policyId.toString() : '',
+              amount: ethers.utils.formatEther(claimDet.amount),
+              status: claimDet.status.toString(),
+              documentHash: claimDet.documentHash || '',
             };
           })
         );
-  
-        setClaims(claimsDetails); // Set detailed claim data
+        setClaims(claimsDetails);
       } catch (error) {
         console.error("Error fetching claims:", error);
       }
     };
     fetchClaims();
   }, []);
-  
-  
 
   const handleTransaction = async (transaction) => {
     if (!contract) return;
@@ -78,28 +61,16 @@ const Insurer = () => {
     }
   };
 
-  const registerUser = () => handleTransaction(contract.registerUser(userAddress, userName, userEmail));
+  const registerUser = () =>
+    handleTransaction(contract.registerUser(userAddress, userName, userEmail));
   const approveClaim = (claimId) => {
-    console.log(claimId)
-    if (!ethers.BigNumber.isBigNumber(claimId)) {
-      // If claimId is not a BigNumber, try to convert it to BigNumber
-      claimId = ethers.BigNumber.from(claimId);
-    }
-  
-    // Now that we are sure claimId is a valid BigNumber, pass it to the contract
-    handleTransaction(contract.approveClaim(claimId));
+    handleTransaction(contract.approveClaim(ethers.BigNumber.from(claimId)));
   };
-  
   const rejectClaim = (claimId, reason) => {
-    if (!ethers.BigNumber.isBigNumber(claimId)) {
-      // If claimId is not a BigNumber, try to convert it to BigNumber
-      claimId = ethers.BigNumber.from(claimId);
-    }
-  
-    // Now that we are sure claimId is a valid BigNumber, pass it to the contract
-    handleTransaction(contract.rejectClaim(claimId, reason));
+    handleTransaction(
+      contract.rejectClaim(ethers.BigNumber.from(claimId), reason)
+    );
   };
-  
 
   const assignPolicy = async () => {
     if (!contract) return;
@@ -112,11 +83,7 @@ const Insurer = () => {
       const policyData = response.data;
 
       const combinedData = {
-        user: {
-          address: userDetails.userAddress,
-          name: userDetails.name,
-          email: userDetails.email,
-        },
+        user: { address: userDetails.userAddress, name: userDetails.name, email: userDetails.email },
         policy: {
           id: policyDetails.policyId.toString(),
           name: policyDetails.policyName,
@@ -143,11 +110,7 @@ const Insurer = () => {
       });
 
       const fileHash = uploadResponse.data.IpfsHash;
-      const fileUrl = `https://gateway.pinata.cloud/ipfs/${fileHash}`;
-      const fileContentResponse = await axios.get(fileUrl);
-      const fileContent = fileContentResponse.data;
-
-      const tx = await contract.assignPolicyToUser(userAddress, policyId, JSON.stringify(fileContent));
+      const tx = await contract.assignPolicyToUser(userAddress, policyId, fileHash);
       await tx.wait();
       alert("Policy assigned successfully with IPFS content!");
     } catch (error) {
@@ -157,66 +120,39 @@ const Insurer = () => {
   };
 
   return (
-    <div>
+    <div className="insurer-container">
       <h1>Insurer Dashboard</h1>
+      <div className="bubble-background">
+        <div className="bubble bubble1"></div>
+        <div className="bubble bubble2"></div>
+        <div className="bubble bubble3"></div>
+      </div>
 
-      {/* Register User Section */}
-      <div>
+      <div className="register-user">
         <h2>Register User</h2>
-        <input
-          type="text"
-          placeholder="User Address"
-          value={userAddress}
-          onChange={(e) => setUserAddress(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="User Name"
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
-        />
-        <input
-          type="email"
-          placeholder="User Email"
-          value={userEmail}
-          onChange={(e) => setUserEmail(e.target.value)}
-        />
+        <input type="text" placeholder="User Address" value={userAddress} onChange={(e) => setUserAddress(e.target.value)} />
+        <input type="text" placeholder="User Name" value={userName} onChange={(e) => setUserName(e.target.value)} />
+        <input type="email" placeholder="User Email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} />
         <button onClick={registerUser}>Register User</button>
       </div>
 
-      {/* Assign Policy Section */}
-      <div>
+      <div className="assign-policy">
         <h2>Assign Policy to User</h2>
-        <input
-          type="text"
-          placeholder="User Address"
-          value={userAddress}
-          onChange={(e) => setUserAddress(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Policy ID"
-          value={policyId}
-          onChange={(e) => setPolicyId(e.target.value)}
-        />
+        <input type="text" placeholder="User Address" value={userAddress} onChange={(e) => setUserAddress(e.target.value)} />
+        <input type="text" placeholder="Policy ID" value={policyId} onChange={(e) => setPolicyId(e.target.value)} />
         <button onClick={assignPolicy}>Assign Policy</button>
       </div>
 
-      {/* List of Claims as Cards */}
       <div className="claim-cards">
         <h2>All Claims</h2>
-        <div className="cards-container">
-          {claims.map((claim, index) => (
-            <div key={index} className="claim-card" onClick={() => setSelectedClaim(claim)}>
-              <h3>Claim ID: {claim.claimId}</h3>
-              <p>Policy ID: {claim.policyId}</p>
-              <p>Status: {claim.status}</p>
-            </div>
-          ))}
-        </div>
+        {claims.map((claim, index) => (
+          <div key={index} className="claim-card" onClick={() => setSelectedClaim(claim)}>
+            <h3>Claim ID: {claim.claimId}</h3>
+            <p>Policy ID: {claim.policyId}</p>
+            <p>Status: {claim.status}</p>
+          </div>
+        ))}
       </div>
-
-      {/* Selected Claim Details */}
       {selectedClaim && (
         <div className="claim-details">
           <h2>Claim Details</h2>
@@ -224,15 +160,6 @@ const Insurer = () => {
           <p><strong>Policy ID:</strong> {selectedClaim.policyId}</p>
           <p><strong>Claim Amount:</strong> {selectedClaim.amount} ETH</p>
           <p><strong>Status:</strong> {selectedClaim.status}</p>
-          <p><strong>Document Hash:</strong> {selectedClaim.documentHash}</p>
-          <div>
-            <h3>Reason for Rejection (if any)</h3>
-            <textarea
-              placeholder="Enter reason for rejection"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
-          </div>
           <div className="claim-actions">
             <button onClick={() => approveClaim(selectedClaim.claimId)}>Approve</button>
             <button onClick={() => rejectClaim(selectedClaim.claimId, reason)}>Reject</button>
